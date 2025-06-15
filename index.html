@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EmotionMotion</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <div class="phone-frame">
+    <canvas id="emotionCanvas" width="375" height="667"></canvas>
+
+    <div id="firstIntroText" class="overlay-text">
+      In quantum world,<br>particles can be<br>in many states at once.</div>
+
+    <div id="secondIntroText" class="overlay-text">
+      <br>Wow!<br>You just discovered<br>your first emotion, curiosity.</div>
+
+    <div id="thirdIntroText" class="overlay-text">
+      <br><br>Let’s find other emotions again
+    </div>
+
+    <div id="emotionText" class="emotion-text"></div>
+
+    <div id="tutorialText" class="overlay-text"><br>Tada!<br> You’ve completed the tutorial!</div>
+
+    <div id="clicktostart" class="clicktostart-text">Click to Start</div>
+
+    <canvas id="gestureCanvas" width="375" height="667" style="position: absolute; top: 0; left: 0;"></canvas>
+    <img id="collectionImage" src="assets/collections.png" style="cursor: pointer; width: 60px;" />
+    <img id="recordsImage" src="assets/records.png" style="cursor: pointer; width: 55px;" />
+    <img id="clockImage" src="assets/clock.png" style="cursor: pointer; width: 117px;" />
+    <img id="menuImage" src="assets/menu.png" style="cursor: pointer; width: 67px;" />
+    <img id="learnImage" src="assets/learn.png" style="cursor: pointer; width: 67px;" />
+    <img id="retryImage" src="assets/retry.png" style="cursor: pointer; width: 67px;" />
+    <img id="shareImage" src="assets/share.png" style="cursor: pointer; width: 67px;" />
+
+    <img id="collectionScreen" src="assets/collectionscreen.png" style="cursor: pointer; width: 375px;" />
+    <img id="recordScreen" src="assets/logscreen.png" style="cursor: pointer; width: 375px;" />
+    <img id="shareScreen" src="assets/sharescreen.png" style="cursor: pointer; width: 375px;" />
+    <img id="collapseButton" src="assets/collapsebutton.png" style="cursor: pointer; width: 279px;" />
+    <img id="collapseScreen" src="assets/collapsescreen.png" style="cursor: pointer; width: 375px;" />
+    <img id="learnScreen" src="assets/learnscreen.png" style="cursor: pointer; width: 375px;" />
+    <img id="exitImage" src="assets/exit.png" style="cursor: pointer; width: 67px;" />
+  </div>
+
+  <script src="script.js"></script>
+</body>
+
+</html>

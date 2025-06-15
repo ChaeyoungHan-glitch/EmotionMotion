@@ -1,0 +1,184 @@
+@font-face {
+  font-family: 'GochiHand';
+  src: url('./assets/Gochi_Hand/GochiHand-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+body {
+  margin: 0;
+  background-color: #111;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-family: 'GochiHand';
+}
+
+.phone-frame {
+  position: relative;
+  width: 375px;
+  height: 667px;
+  background-color: white;
+  border: 8px solid #333;
+  border-radius: 30px;
+  overflow: hidden;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+}
+
+.overlay-text {
+  position: absolute;
+  top: 70%;
+  width: 100%;
+  color: rgb(145,145,145);
+  font-size: 25px;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+}
+
+.overlay-text.visible {
+  opacity: 1;
+}
+
+.clicktostart-text {
+  position: absolute;
+  top: 69%;
+  width: 100%;
+  color: rgb(145,145,145);
+  font-size: 38px;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+}
+
+.clicktostart-text.visible {
+  opacity: 1;
+}
+
+.emotion-text {
+  position: absolute;
+  top: 64%;
+  width: 100%;
+  color: rgb(145,145,145);
+  font-size: 50px;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+}
+
+.emotion-text.visible {
+  opacity: 1;
+}
+
+#collectionImage {
+  position: absolute;
+  top: 22px;
+  left: 297px;
+  cursor: pointer;
+  display: none; 
+}
+
+#recordsImage {
+  position: absolute;
+  top: 20px;
+  left: 18px;
+  cursor: pointer;
+  display: none;
+}
+
+#clockImage {
+  position: absolute;
+  top: 25px;
+  left: 130px;
+  cursor: pointer;
+  display: none;
+}
+
+#menuImage {
+  position: absolute;
+  top: 588px;
+  left: 153px;
+  cursor: pointer;
+  display: none;
+}
+
+#learnImage {
+  position: absolute;
+  top: 588px;
+  left: 40px;
+  cursor: pointer;
+  display: none;
+}
+
+#shareImage {
+  position: absolute;
+  top: 588px;
+  left: 263px;
+  cursor: pointer;
+  display: none;
+}
+
+#retryImage {
+  position: absolute;
+  top: 588px;
+  left: 154px;
+  cursor: pointer;
+  display: none;
+}
+
+#collectionScreen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  cursor: pointer;
+  display: none;
+}
+
+#recordScreen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  cursor: pointer;
+  display: none;
+}
+
+#shareScreen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  cursor: pointer;
+  display: none;
+}
+
+#collapseScreen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  cursor: pointer;
+  display: none;
+}
+
+#learnScreen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  cursor: pointer;
+  display: none;
+}
+
+#exitImage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  cursor: pointer;
+  display: none;
+}
+
+#collapseButton {
+  position: absolute;
+  top: 504px;
+  left: 46px;
+  cursor: pointer;
+  display: none;
+}
