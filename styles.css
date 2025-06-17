@@ -15,10 +15,6 @@ body {
   font-family: 'GochiHand';
 }
 
-canvas {
-  touch-action: none; /* Prevents zoom/scroll on canvas */
-}
-
 .phone-frame {
   position: relative;
   width: 375px;
