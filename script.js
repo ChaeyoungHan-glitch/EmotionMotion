@@ -6,6 +6,11 @@ const gestureCtx = gestureCanvas.getContext("2d");
 
 const superpositionText = document.getElementById("firstIntroText");
 
+const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+if (isMobile) {
+  document.querySelector(".phone-frame").classList.add("no-frame");
+}
+
 let collection = false;
 let records = false;
 let menu = false;
@@ -38,6 +43,7 @@ let clickTimes = [];
 const clickWindow = 1000;
 const clickThreshold = 5;
 let angerIntensity = 0;
+let calmInterval = null;
 
 let curiosityProgress = 0;
 let progress = {
@@ -93,6 +99,8 @@ imgButton.addEventListener("click", () => {
   collapse = true;
 });
 
+let calmStartTime = 0;
+
 function getTouchPos(e) {
   const rect = gestureCanvas.getBoundingClientRect();
   const touch = e.touches[0] || e.changedTouches[0];
@@ -107,12 +115,20 @@ gestureCanvas.addEventListener("mousedown", (e) => {
   userPath = [];
   calmStartTime = Date.now();
 
+  if (!calmInterval) {
+  calmInterval = setInterval(() => {
+    if (!isDrawing) return;
+
+    const calmScore = detectCalm(calmStartTime, userPath);
+    progress.calm = Math.min(1.5, calmScore);
+  }, 100); // every 100ms
+}
+
   const rect = gestureCanvas.getBoundingClientRect();
   const x = e.clientX - rect.left;
   const y = e.clientY - rect.top;
   userPath.push({ x, y });
 
-  // Anger tap logic (unchanged)
   if (!discoveryDone) return;
   const now = Date.now();
   clickTimes.push(now);
@@ -136,16 +152,23 @@ gestureCanvas.addEventListener("mousemove", (e) => {
   const y = e.clientY - rect.top;
   userPath.push({ x, y });
 
-  updateLiveProgress(); // optional
+  updateLiveProgress();
 });
 
-// === Touch Events (mobile) ===
-
 gestureCanvas.addEventListener("touchstart", (e) => {
-  e.preventDefault(); // prevent scroll
+  e.preventDefault();
   isDrawing = true;
   userPath = [];
   calmStartTime = Date.now();
+
+  if (!calmInterval) {
+  calmInterval = setInterval(() => {
+    if (!isDrawing) return;
+
+    const calmScore = detectCalm(calmStartTime, userPath);
+    progress.calm = Math.min(1.5, calmScore);
+  }, 100); // every 100ms
+}
 
   const { x, y } = getTouchPos(e);
   userPath.push({ x, y });
@@ -169,12 +192,12 @@ gestureCanvas.addEventListener("touchend", (e) => {
 
 gestureCanvas.addEventListener("touchmove", (e) => {
   if (!isDrawing) return;
-  e.preventDefault(); // prevent scroll
+  e.preventDefault(); 
 
   const { x, y } = getTouchPos(e);
   userPath.push({ x, y });
 
-  updateLiveProgress(); // optional
+  updateLiveProgress();
 }, { passive: false });
 
 function handleGestureEnd() {
@@ -186,6 +209,11 @@ function handleGestureEnd() {
     document.getElementById("clicktostart")?.remove();
     tutorialDone = true;
   }
+  
+  if (calmInterval) {
+  clearInterval(calmInterval);
+  calmInterval = null;
+}
 
   if (discoveryDone && userPath.length > 10) {
     const curiosityScore = detectCuriosity(userPath);
@@ -194,10 +222,6 @@ function handleGestureEnd() {
     const fearScore = detectFear(userPath);
     const calmScore = detectCalm(calmStartTime, userPath);
 
-    if (calmScore > 0.1) {
-      progress.calm = Math.min(1.5, progress.calm + calmScore * 0.4);
-      console.log("Calm detected:", calmScore.toFixed(2));
-    }
 
     if (curiosityScore > 0.2) {
       progress.curiosity = Math.min(1.5, progress.curiosity + curiosityScore * 0.3);
@@ -207,6 +231,8 @@ function handleGestureEnd() {
       progress.sadness = Math.min(1.5, progress.sadness + sadnessScore * 0.3);
     } else if (fearScore > 0.2) {
       progress.fear = Math.min(1.5, progress.fear + fearScore * 0.3);
+    } else if (calmScore > 0.2) {
+      progress.calm = Math.min(1.5, progress.calm + calmScore * 0.3);
     }
 
     userPath = [];
@@ -228,8 +254,6 @@ function updateLiveProgress() {
 
   if (userPath.length > 200) userPath.shift();
 }
-
-
 
 function delay(ms) {
   return new Promise((resolve) => setTimeout(() => { resolve() }, ms));
@@ -293,12 +317,14 @@ function detectHappiness(path) {
   if (path.length < 10) return 0;
 
   let totalDy = 0;
+  let totalDx = 0;
   let zigzagCount = 0;
 
   for (let i = 1; i < path.length; i++) {
     const dx = path[i].x - path[i - 1].x;
     const dy = path[i].y - path[i - 1].y;
     totalDy += dy;
+    totalDx += Math.abs(dx);
 
     if (i > 2) {
       const prevDx = path[i - 1].x - path[i - 2].x;
@@ -306,9 +332,11 @@ function detectHappiness(path) {
     }
   }
 
-  // Check for strong upward movement and low zigzag count
-  if (totalDy < -10 && zigzagCount < 3) {
-    return Math.min(1.5, Math.abs(totalDy) / 10); // scale and limit happiness value
+  const verticalEnough = totalDy < -20;
+  const straightEnough = totalDx < Math.abs(totalDy) * 0.3;
+
+  if (verticalEnough && straightEnough && zigzagCount < 2) {
+    return Math.min(1.5, Math.abs(totalDy) / 20);
   }
 
   return 0;
@@ -318,12 +346,14 @@ function detectSadness(path) {
   if (path.length < 10) return 0;
 
   let totalDy = 0;
+  let totalDx = 0;
   let zigzagCount = 0;
 
   for (let i = 1; i < path.length; i++) {
     const dx = path[i].x - path[i - 1].x;
     const dy = path[i].y - path[i - 1].y;
     totalDy += dy;
+    totalDx += Math.abs(dx);
 
     if (i > 2) {
       const prevDx = path[i - 1].x - path[i - 2].x;
@@ -331,58 +361,68 @@ function detectSadness(path) {
     }
   }
 
-  // Just check if downward movement is enough and zigzag is low
-  if (totalDy > 10 && zigzagCount < 3) {
-    return Math.min(1.5, totalDy / 10); // Normalize totalDy for a reasonable range
+  const verticalEnough = totalDy > 20; // strong downward
+  const straightEnough = totalDx < totalDy * 0.3;
+
+  if (verticalEnough && straightEnough && zigzagCount < 2) {
+    return Math.min(1.5, totalDy / 20);
   }
 
   return 0;
 }
 
 function detectFear(path) {
-  if (path.length < 15) return 0;
+  if (path.length < 10) return 0;
 
-  let zigzagCountX = 0;
-  let zigzagCountY = 0;
-
-  for (let i = 2; i < path.length; i++) {
-    const dx1 = path[i - 1].x - path[i - 2].x;
-    const dx2 = path[i].x - path[i - 1].x;
-    const dy1 = path[i - 1].y - path[i - 2].y;
-    const dy2 = path[i].y - path[i - 1].y;
-
-    if ((dx1 > 0 && dx2 < 0) || (dx1 < 0 && dx2 > 0)) zigzagCountX++;
-    if ((dy1 > 0 && dy2 < 0) || (dy1 < 0 && dy2 > 0)) zigzagCountY++;
-  }
-
-  const totalZigzags = zigzagCountX + zigzagCountY;
-
-  if (totalZigzags > 10) {  // many direction changes in both axes
-    return Math.min(2, totalZigzags / 20);
-  }
-
-  return 0;
-}
-
-function detectCalm(path) {
-  if (path.length < 20) return 0;
-
-  // Calculate total horizontal and vertical displacement
+  let directionChanges = 0;
+  let lastDx = 0;
+  let lastDirection = 0;
   let totalDx = 0;
-  let totalDy = 0;
 
   for (let i = 1; i < path.length; i++) {
-    totalDx += Math.abs(path[i].x - path[i - 1].x);
-    totalDy += Math.abs(path[i].y - path[i - 1].y);
+    const dx = path[i].x - path[i - 1].x;
+
+    // Skip tiny moves (noise)
+    if (Math.abs(dx) < 5) continue;
+
+    const direction = dx > 0 ? 1 : -1;
+
+    if (direction !== lastDirection && lastDirection !== 0) {
+      directionChanges++;
+    }
+
+    lastDirection = direction;
+    totalDx += Math.abs(dx);
   }
 
-  // If horizontal movement is much larger than vertical, and total horizontal displacement is large enough
-  if (totalDx > 150 && totalDx > totalDy * 3) {
-    return Math.min(3, totalDx / 100); // scale disgust intensity by horizontal swipe length
+  // Trigger if direction changed a few times and total motion is enough
+  if (directionChanges >= 3 && totalDx > 100) {
+    return Math.min(1.5, directionChanges / 4);
   }
 
   return 0;
 }
+
+function detectCalm(startTime, path) {
+  const duration = Date.now() - startTime;
+  if (duration < 300) return 0;
+
+  const recentPath = path.slice(-15);
+
+  let totalMovement = 0;
+  for (let i = 1; i < recentPath.length; i++) {
+    const dx = recentPath[i].x - recentPath[i - 1].x;
+    const dy = recentPath[i].y - recentPath[i - 1].y;
+    totalMovement += Math.sqrt(dx * dx + dy * dy);
+  }
+
+  if (totalMovement < 20) {
+    return Math.min(1.5, duration / 3000); // full calm after ~3 seconds
+  }
+
+  return 0;
+}
+
 
 function detectCuriosity(path) {
   if (path.length < 10) return 0;
@@ -427,8 +467,7 @@ function drawSadness(ctx, x, y, radius) {
   ctx.translate(x, y);
   ctx.beginPath();
 
-  // Create a teardrop shape
-  ctx.moveTo(0, -radius); // top point
+  ctx.moveTo(0, -radius);
   ctx.bezierCurveTo(radius, -radius * 0.5, radius, radius * 0.8, 0, radius); // right curve
   ctx.bezierCurveTo(-radius, radius * 0.8, -radius, -radius * 0.5, 0, -radius); // left curve
 
@@ -446,9 +485,8 @@ function drawFear(ctx, x, y, radius, cornerRadius = 10) {
   const angleStep = (2 * Math.PI) / sides;
   const points = [];
 
-  // Calculate triangle vertices
   for (let i = 0; i < sides; i++) {
-    const angle = -Math.PI / 2 + i * angleStep; // start at top vertex
+    const angle = -Math.PI / 2 + i * angleStep;
     points.push({
       x: Math.cos(angle) * radius,
       y: Math.sin(angle) * radius,
@@ -462,17 +500,14 @@ function drawFear(ctx, x, y, radius, cornerRadius = 10) {
     const next = points[(i + 1) % sides];
     const prev = points[(i + sides - 1) % sides];
 
-    // Vector from current to prev and current to next
     const vPrev = { x: current.x - prev.x, y: current.y - prev.y };
     const vNext = { x: next.x - current.x, y: next.y - current.y };
 
-    // Normalize vectors
     const lenPrev = Math.hypot(vPrev.x, vPrev.y);
     const lenNext = Math.hypot(vNext.x, vNext.y);
     const nPrev = { x: vPrev.x / lenPrev, y: vPrev.y / lenPrev };
     const nNext = { x: vNext.x / lenNext, y: vNext.y / lenNext };
 
-    // Points for arc start and end (offset from corner by cornerRadius)
     const startX = current.x - nPrev.x * cornerRadius;
     const startY = current.y - nPrev.y * cornerRadius;
 
@@ -485,13 +520,12 @@ function drawFear(ctx, x, y, radius, cornerRadius = 10) {
       ctx.lineTo(startX, startY);
     }
 
-    // Draw rounded corner arc
     ctx.quadraticCurveTo(current.x, current.y, endX, endY);
   }
 
   ctx.closePath();
 
-  ctx.fillStyle = "#D0B3E7"; // orange-ish for fear
+  ctx.fillStyle = "#D0B3E7";
   ctx.fill();
 
   ctx.restore();
@@ -500,7 +534,7 @@ function drawFear(ctx, x, y, radius, cornerRadius = 10) {
 function drawCalm(ctx, x, y, radius) {
   ctx.save();
   ctx.fillStyle = "#AEC58C";
-  ctx.fillRect(x - radius / 2, y - radius / 2, radius, radius); // simple square
+  ctx.fillRect(x - radius / 2, y - radius / 2, radius, radius);
   ctx.restore();
 }
 
@@ -850,8 +884,8 @@ function draw() {
       imgRecordScreen.style.display = "none";
       imgLearnScreen.style.display = "none";
       imgShareScreen.style.display = "none";
-      imgMenu.style.display = "none";
       imgButton.style.display = "none";
+      imgMenu.style.display = "none";
       imgShare.style.display = "block";
       imgRetry.style.display = "block";
       imgLearn.style.display = "block";
@@ -862,10 +896,10 @@ function draw() {
       imgRecordScreen.style.display = "none";
       imgLearnScreen.style.display = "none";
       imgShareScreen.style.display = "none";
+      imgButton.style.display = "none";
       imgShare.style.display = "none";
       imgRetry.style.display = "none";
       imgLearn.style.display = "none";
-      imgButton.style.display = "none";
       imgMenu.style.display = "block";
       imgClock.style.display = "block";
       imgCollection.style.display = "block";
@@ -926,4 +960,5 @@ function draw() {
 
 createEmotionShapes();
 draw();
+
 
