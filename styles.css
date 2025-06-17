@@ -5,8 +5,12 @@
   font-style: normal;
 }
 
+canvas {
+  touch-action: none; /* Prevents zoom/scroll on canvas */
+}
+
 body {
-  margin: 0;
+  margin: 0;s
   background-color: #111;
   display: flex;
   justify-content: center;
