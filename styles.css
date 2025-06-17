@@ -5,12 +5,8 @@
   font-style: normal;
 }
 
-canvas {
-  touch-action: none; /* Prevents zoom/scroll on canvas */
-}
-
 body {
-  margin: 0;s
+  margin: 0;
   background-color: #111;
   display: flex;
   justify-content: center;
@@ -28,6 +24,12 @@ body {
   border-radius: 30px;
   overflow: hidden;
   box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+}
+
+.phone-frame.no-frame {
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
 }
 
 .overlay-text {
