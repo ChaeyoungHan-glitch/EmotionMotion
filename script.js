@@ -93,8 +93,6 @@ imgButton.addEventListener("click", () => {
   collapse = true;
 });
 
-let calmStartTime = 0;
-
 function getTouchPos(e) {
   const rect = gestureCanvas.getBoundingClientRect();
   const touch = e.touches[0] || e.changedTouches[0];
