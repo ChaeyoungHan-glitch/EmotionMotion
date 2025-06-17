@@ -851,6 +851,7 @@ function draw() {
       imgLearnScreen.style.display = "none";
       imgShareScreen.style.display = "none";
       imgMenu.style.display = "none";
+      imgButton.style.display = "none";
       imgShare.style.display = "block";
       imgRetry.style.display = "block";
       imgLearn.style.display = "block";
@@ -864,6 +865,7 @@ function draw() {
       imgShare.style.display = "none";
       imgRetry.style.display = "none";
       imgLearn.style.display = "none";
+      imgButton.style.display = "none";
       imgMenu.style.display = "block";
       imgClock.style.display = "block";
       imgCollection.style.display = "block";
