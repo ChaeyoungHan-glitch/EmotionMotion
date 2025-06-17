@@ -93,44 +93,99 @@ imgButton.addEventListener("click", () => {
   collapse = true;
 });
 
-let isDrawing = false;
-let userPath = [];
 let calmStartTime = 0;
 
-gestureCanvas.addEventListener("mousedown", () => {
+function getTouchPos(e) {
+  const rect = gestureCanvas.getBoundingClientRect();
+  const touch = e.touches[0] || e.changedTouches[0];
+  return {
+    x: touch.clientX - rect.left,
+    y: touch.clientY - rect.top
+  };
+}
+
+gestureCanvas.addEventListener("mousedown", (e) => {
   isDrawing = true;
   userPath = [];
+  calmStartTime = Date.now();
 
-  if (!discoveryDone) {
-    return;
-  }
+  const rect = gestureCanvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  userPath.push({ x, y });
 
+  // Anger tap logic (unchanged)
+  if (!discoveryDone) return;
   const now = Date.now();
   clickTimes.push(now);
-
   clickTimes = clickTimes.filter(t => now - t < clickWindow);
 
   if (!tutorialTextDone || tutorialDone) {
     const rawIntensity = clickTimes.length / clickThreshold;
     angerIntensity = Math.min(1, rawIntensity);
     progress.anger = Math.min(1.5, progress.anger + rawIntensity * 0.3);
-    progress.happiness = Math.min(1.5, progress.anger + rawIntensity * 0.3);
-    progress.fear = Math.min(1.5, progress.anger + rawIntensity * 0.3);
-    progress.calm = Math.min(1.5, progress.anger + rawIntensity * 0.3);
-    progress.sadness = Math.min(1.5, progress.anger + rawIntensity * 0.3);
   }
 });
 
 gestureCanvas.addEventListener("mouseup", () => {
+  handleGestureEnd();
+});
+
+gestureCanvas.addEventListener("mousemove", (e) => {
+  if (!isDrawing) return;
+  const rect = gestureCanvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  userPath.push({ x, y });
+
+  updateLiveProgress(); // optional
+});
+
+// === Touch Events (mobile) ===
+
+gestureCanvas.addEventListener("touchstart", (e) => {
+  e.preventDefault(); // prevent scroll
+  isDrawing = true;
+  userPath = [];
+  calmStartTime = Date.now();
+
+  const { x, y } = getTouchPos(e);
+  userPath.push({ x, y });
+
+  if (!discoveryDone) return;
+  const now = Date.now();
+  clickTimes.push(now);
+  clickTimes = clickTimes.filter(t => now - t < clickWindow);
+
+  if (!tutorialTextDone || tutorialDone) {
+    const rawIntensity = clickTimes.length / clickThreshold;
+    angerIntensity = Math.min(1, rawIntensity);
+    progress.anger = Math.min(1.5, progress.anger + rawIntensity * 0.3);
+  }
+}, { passive: false });
+
+gestureCanvas.addEventListener("touchend", (e) => {
+  e.preventDefault();
+  handleGestureEnd();
+}, { passive: false });
+
+gestureCanvas.addEventListener("touchmove", (e) => {
+  if (!isDrawing) return;
+  e.preventDefault(); // prevent scroll
+
+  const { x, y } = getTouchPos(e);
+  userPath.push({ x, y });
+
+  updateLiveProgress(); // optional
+}, { passive: false });
+
+function handleGestureEnd() {
   isDrawing = false;
 
-  if (menu) {
-    menu = false;
-  }
+  if (menu) menu = false;
 
   if (tutorialTextDone && !tutorialDone) {
-    const clicktostart = document.getElementById("clicktostart");
-    clicktostart?.remove();
+    document.getElementById("clicktostart")?.remove();
     tutorialDone = true;
   }
 
@@ -139,14 +194,23 @@ gestureCanvas.addEventListener("mouseup", () => {
     const happinessScore = detectHappiness(userPath);
     const sadnessScore = detectSadness(userPath);
     const fearScore = detectFear(userPath);
-    const calmScore = detectCalm(userPath);
+    const calmScore = detectCalm(calmStartTime, userPath);
+
+    if (calmScore > 0.1) {
+      progress.calm = Math.min(1.5, progress.calm + calmScore * 0.4);
+      console.log("Calm detected:", calmScore.toFixed(2));
+    }
 
     if (curiosityScore > 0.2) {
+      progress.curiosity = Math.min(1.5, progress.curiosity + curiosityScore * 0.3);
     } else if (happinessScore > 0.2) {
+      progress.happiness = Math.min(1.5, progress.happiness + happinessScore * 0.3);
     } else if (sadnessScore > 0.2) {
-    } else if (calmScore > 0.2) {
+      progress.sadness = Math.min(1.5, progress.sadness + sadnessScore * 0.3);
     } else if (fearScore > 0.2) {
+      progress.fear = Math.min(1.5, progress.fear + fearScore * 0.3);
     }
+
     userPath = [];
   }
 
@@ -154,26 +218,19 @@ gestureCanvas.addEventListener("mouseup", () => {
     angerIntensity = 0;
     clickTimes = [];
   }
-});
+}
 
-gestureCanvas.addEventListener("mousemove", (e) => {
-  if (!isDrawing) return;
-
-  const rect = gestureCanvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
-  userPath.push({ x, y });
-
-  if (!tutorialTextDone || tutorialDone) {
-    curiosityProgress = Math.min(1.5, detectCuriosity(userPath));
-    progress.happiness = Math.min(1.5, detectHappiness(userPath));
-    progress.sadness = Math.min(1.5, detectSadness(userPath));
-    progress.calm = Math.min(1.5, detectCalm(userPath));
-    progress.fear = Math.min(1.5, detectFear(userPath));
-  }
+function updateLiveProgress() {
+  // Optional: update live progress visuals during drag
+  curiosityProgress = Math.min(1.5, detectCuriosity(userPath));
+  progress.happiness = Math.min(1.5, detectHappiness(userPath));
+  progress.sadness = Math.min(1.5, detectSadness(userPath));
+  progress.calm = Math.min(1.5, detectCalm(calmStartTime, userPath));
+  progress.fear = Math.min(1.5, detectFear(userPath));
 
   if (userPath.length > 200) userPath.shift();
-});
+}
+
 
 
 function delay(ms) {
